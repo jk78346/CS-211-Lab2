@@ -35,13 +35,13 @@ int mydgetrf(double *A, int *ipiv, int n)
     //ipiv            = (int*)    malloc(n*sizeof(int));
     //for(i = 0 ; i < n ; i++){ipiv[i] = i; printf("ipiv[%d]: %d\n", i, ipiv[i]);}
     double d_tmp;
-//    printf("init\n");
-//    print_matrix(A, n, n);
+    //printf("init\n");
+    //print_matrix(A, n, n);
     for(i = 0 ; i < n-1 ; i++){
       max_idx = i;
-      max_val = abs(A[i*n+i]);
+      max_val = fabs(A[i*n+i]);
       for(t = i+1 ; t < n ; t++){
-        if(fabs(A[t*n+i] > max_val)){
+        if(fabs(A[t*n+i]) > max_val){
           max_idx = t;
           max_val = fabs(A[t*n+i]);
         }
@@ -68,19 +68,19 @@ int mydgetrf(double *A, int *ipiv, int n)
       for(j = i+1;  j < n ; j++){
         A[j*n+i] = A[j*n+i] / A[i*n+i];
         for(k = i+1; k < n ; k++){
-          A[j*n+k] = A[j*n+k] - A[j*n+i] * A[i*n+k];
+          A[j*n+k] -= A[j*n+i] * A[i*n+k];
         }
     //    A[j*n+i] = 0;
       }
-//        printf("i= %d\n", i);
-//        print_matrix(A, n, n);
-//        printf("%d %d %d %d\n", ipiv[0], ipiv[1], ipiv[2], ipiv[3]);
+        //printf("i= %d\n", i);
+        //print_matrix(A, n, n);
+        //printf("%d %d %d %d\n", ipiv[0], ipiv[1], ipiv[2], ipiv[3]);
     }
     free(tmp_row);
-    printf("after dgetrf\n");
-    print_matrix(A, n, n);
-    printf("ipiv:\n");
-    printf("%d %d %d %d\n", ipiv[0], ipiv[1], ipiv[2], ipiv[3]);
+    //printf("after dgetrf\n");
+    //print_matrix(A, n, n);
+    //printf("ipiv:\n");
+    //printf("%d %d %d %d\n", ipiv[0], ipiv[1], ipiv[2], ipiv[3]);
     return 0;
 }
 
@@ -131,8 +131,8 @@ void mydtrsv(char UPLO, double *A, double *B, int n, int *ipiv)
         for(j = i+1; j < n ; j++){
           B[i] -= A[i*n+j] * B[j];
         }
-        B[i] /= A[i*n+i];
-      }
+        B[i] /= A[i*n+i]; 
+     }
     }else{
       printf("undefined UPLO: %c\n", UPLO);
       exit(0);
