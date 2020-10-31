@@ -1,9 +1,11 @@
 #include "../include/for_you_to_do.h"
 
+#define MIN(x, y) (((x) < (y))?(x):(y))
+
 int get_block_size(){
     //return the block size you'd like to use 
     /*add your code here */
-    return 4;//128;
+    return 3;//128;
   
 }
 
@@ -201,6 +203,78 @@ void mydgemm(double *A, double *B, double *C, int n, int i, int j, int k, int b)
  **/
 int mydgetrf_block(double *A, int *ipiv, int n, int b) 
 {
+    int ib, end, i, j, k, t, max_idx, tmp;
+    b = get_block_size();
+    double max_val;
+    double d_tmp;
+    for(ib = 0 ; ib < n ; ib+=b){
+      end = MIN(ib+b-1, n); // ending idx of this block inclusively
+      for(i = ib ; i <= end ; i++){
+        // find pivot row t
+        max_idx = i;
+        max_val = fabs(A[i*n+i]);
+        for(t = i+1 ; t < n ; t++){
+          if(fabs(A[t*n+i]) > max_val){
+            max_idx = t;
+            max_val = fabs(A[t*n+i]);
+          }
+        }
+        if(max_val == 0){
+          return -1;
+        }else{
+          if(max_idx != i){
+            tmp = ipiv[i];
+            ipiv[i] = ipiv[max_idx];
+            ipiv[max_idx] = tmp;
+            for(k = 0 ; k < n ; k++){
+              d_tmp          = A[i*n+k];
+              A[i*n+k]       = A[max_idx*n+k];
+              A[max_idx*n+k] = d_tmp;
+            }    
+          }
+        }
+        //printf("after swap: ib: %d, i: %d\n", ib, i);
+        //print_matrix(A, n, n);
+        //getchar();
+        for(j = i+1 ; j < n ;j++){
+          A[j*n+i] /= A[i*n+i];
+          for(k = i+1 ; k <= end ; k++){
+            A[j*n+k] -= A[j*n+i]*A[i*n+k];
+          }
+        }
+        //printf("after /= and -=, ib: %d, i: %d\n", ib, i);
+        //print_matrix(A, n, n);
+        //getchar();
+      } // end i
+      // update right block
+      // solve LL*X = A, where A(ib:end, end+1:n) , X is the new A(ib:end, end+1:n)
+      for(j = end+1 ; j < n ; j++){
+        for(i = ib ; i<= end ;i++){
+          for(k = ib ; k < i ; k++){
+            A[i*n+j] -= A[i*n+k]/*LL*/*A[k*n+j]; 
+          }    
+        }
+      }
+      //printf("after -=, ib: %d, i: %d\n", ib, i);
+      //print_matrix(A, n, n);
+      //getchar();
+      // the GEMM
+      for(i = end+1 ; i < n ; i++){
+        for(j = end+1 ; j < n ; j++){
+          register double the_tmp = 0;
+          for(k = ib ; k <= end ; k++){
+            the_tmp += A[i*n+k]*A[k*n+j];
+          }
+          A[i*n+j] -= the_tmp;
+          //printf("the_tmp: %f, i: %d, j: %d\n", the_tmp, i, j);
+        }
+      }
+      //printf("after gemm, ib: %d, i: %d\n", ib, i);
+      //print_matrix(A, n, n);
+      //getchar();
+    } // end ib
+    //printf("after block\n");
+    //print_matrix(A, n, n );
     return 0;
 }
 
