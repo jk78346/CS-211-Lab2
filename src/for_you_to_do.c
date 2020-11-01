@@ -5,7 +5,7 @@
 int get_block_size(){
     //return the block size you'd like to use 
     /*add your code here */
-    return 3;//128;
+    return 4;//128;
   
 }
 
@@ -34,8 +34,6 @@ int mydgetrf(double *A, int *ipiv, int n)
     int i, j, k, t, max_idx, tmp;
     double max_val;
     double* tmp_row = (double*) malloc(n*sizeof(double));
-    //ipiv            = (int*)    malloc(n*sizeof(int));
-    //for(i = 0 ; i < n ; i++){ipiv[i] = i; printf("ipiv[%d]: %d\n", i, ipiv[i]);}
     double d_tmp;
     //printf("init\n");
     //print_matrix(A, n, n);
@@ -72,7 +70,6 @@ int mydgetrf(double *A, int *ipiv, int n)
         for(k = i+1; k < n ; k++){
           A[j*n+k] -= A[j*n+i] * A[i*n+k];
         }
-    //    A[j*n+i] = 0;
       }
         //printf("i= %d\n", i);
         //print_matrix(A, n, n);
@@ -206,6 +203,7 @@ int mydgetrf_block(double *A, int *ipiv, int n, int b)
     int ib, end, i, j, k, t, max_idx, tmp;
     b = get_block_size();
     double max_val;
+//    double* row = (double* ) malloc(n*sizeof(double));
     double d_tmp;
     for(ib = 0 ; ib < n ; ib+=b){
       end = MIN(ib+b-1, n); // ending idx of this block inclusively
@@ -230,21 +228,18 @@ int mydgetrf_block(double *A, int *ipiv, int n, int b)
               d_tmp          = A[i*n+k];
               A[i*n+k]       = A[max_idx*n+k];
               A[max_idx*n+k] = d_tmp;
-            }    
+            }
+            //memcpy(row, &A[i*n],          n*sizeof(double));    
+            //memcpy(&A[i*n], &A[max_idx*n],n*sizeof(double));    
+            //memcpy(&A[max_idx*n], row,    n*sizeof(double));    
           }
         }
-        //printf("after swap: ib: %d, i: %d\n", ib, i);
-        //print_matrix(A, n, n);
-        //getchar();
         for(j = i+1 ; j < n ;j++){
           A[j*n+i] /= A[i*n+i];
           for(k = i+1 ; k <= end ; k++){
             A[j*n+k] -= A[j*n+i]*A[i*n+k];
           }
         }
-        //printf("after /= and -=, ib: %d, i: %d\n", ib, i);
-        //print_matrix(A, n, n);
-        //getchar();
       } // end i
       // update right block
       // solve LL*X = A, where A(ib:end, end+1:n) , X is the new A(ib:end, end+1:n)
@@ -255,26 +250,31 @@ int mydgetrf_block(double *A, int *ipiv, int n, int b)
           }    
         }
       }
-      //printf("after -=, ib: %d, i: %d\n", ib, i);
-      //print_matrix(A, n, n);
-      //getchar();
       // the GEMM
-      for(i = end+1 ; i < n ; i++){
-        for(j = end+1 ; j < n ; j++){
-          register double the_tmp = 0;
-          for(k = ib ; k <= end ; k++){
-            the_tmp += A[i*n+k]*A[k*n+j];
+// ===== v1 =====
+      int i1;
+      for(i = end+1 ; i < n ; i+=b){
+        for(i1 = i ; i1 < i+b ; i1++){
+          for(j = end+1 ; j < n ; j++){
+            register double the_tmp = A[i1*n+j];
+            for(k = ib ; k <= end; k++){
+              the_tmp -= A[i1*n+k]*A[k*n+j];
+            }
+            A[i1*n+j] = the_tmp;
           }
-          A[i*n+j] -= the_tmp;
-          //printf("the_tmp: %f, i: %d, j: %d\n", the_tmp, i, j);
         }
       }
-      //printf("after gemm, ib: %d, i: %d\n", ib, i);
-      //print_matrix(A, n, n);
-      //getchar();
+// ===== v0 =====
+      //for(i = end+1 ; i < n ; i++){
+      //  for(j = end+1 ; j < n ; j++){
+      //    register double the_tmp = 0;
+      //    for(k = ib ; k <= end ; k++){
+      //      the_tmp += A[i*n+k]*A[k*n+j];
+      //    }
+      //    A[i*n+j] -= the_tmp;
+      //  }
+      //}
     } // end ib
-    //printf("after block\n");
-    //print_matrix(A, n, n );
     return 0;
 }
 
